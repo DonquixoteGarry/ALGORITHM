@@ -21,3 +21,139 @@
 这样一轮一轮地进行下去，直到某个时刻所有人都不再单身
 每个人的对象也都将固定下来，此时的搭配就一定是稳定的
 */
+
+
+
+
+#include<iostream>
+using namespace std;
+
+int* man_goal;
+//an index to point which woman to call(according to the favlist, 1 initially ) 
+int** mfav, ** wfav;
+//man(woman)'s favorite list
+int* man_find;
+//which woman this man got,0 is none
+
+void init(int size)
+{
+	int fav_one;
+	man_goal = new int[size + 1];
+	man_find = new int[size + 1];
+	for (int s = 1; s <= size; s++)man_goal[s] = 1;
+	for (int k = 1; k <= size; k++)man_find[k] = 0;
+	mfav = new int* [size + 1];
+	wfav = new int* [size + 1];
+	for (int i = 1; i <= size; i++)mfav[i] = new int[size + 1];
+	for (int j = 1; j <= size; j++)wfav[j] = new int[size + 1];
+	for (int n = 1; n <= size; n++)
+	{
+		for (int m = 1; m <= size; m++)
+		{
+			cin >> fav_one;
+			mfav[n][m] = fav_one;
+		}
+	}
+	for (int n = 1; n <= size; n++)
+	{
+		for (int m = 1; m <= size; m++)
+		{
+			cin >> fav_one;
+			wfav[n][m] = fav_one;
+		}
+	}
+}
+
+bool check(int _size)
+{//check whether all people married
+	for (int a = 1; a <= _size; a++)
+	{
+		if (man_find[a] == 0)return false;
+	}
+	return true;
+}
+
+int find_hus(int wno, int _size)
+{//find one's husband,none is 0
+ //wno means woman_number
+	for (int a = 1; a <= _size; a++)
+	{
+		if (man_find[a] == wno)return a;
+	}
+	return 0;
+}
+
+bool compareLove(int wno, int old_hus, int new_hus, int _size)
+{//old_hus yes => true
+ //new_hus yes => false
+	for (int a = 1; a <= _size; a++)
+	{
+		if (wfav[wno][a] == old_hus)return true;
+		if (wfav[wno][a] == new_hus)return false;
+	}
+	return true;
+}
+
+void couple_change(int wno, int newmno, int _size)
+{//compare and decide change husband or not
+	if (find_hus(wno, _size) == 0)
+	{
+		man_find[newmno] = wno;
+		//cout << "GIRL." << wno << " first choose BOY." << newmno<<endl;
+	}
+	else
+	{
+		int old_hus = find_hus(wno, _size);
+		for (int kk = 1; kk <= _size; kk++)
+		{
+			if (compareLove(wno, old_hus, newmno, _size) == true)
+			{
+				//cout << "GIRL." << wno << " refuse BOY." << newmno;
+				//cout << ",stay BOY." << old_hus << endl;
+				man_goal[newmno]++;
+				return;
+			}
+			else
+			{
+				//cout << "GIRL." << wno << " choose BOY." << newmno;
+				//cout << ",kick BOY." << old_hus << endl;
+				man_goal[old_hus]++;
+				man_find[old_hus] = 0;
+				man_find[newmno] = wno;
+				return;
+			}
+		}
+	}
+}
+
+void show(int size)
+{
+	//cout << "couplelist:";
+	for (int ss = 1; ss <= size; ss++)
+	{
+		cout << man_find[ss] << " ";
+	}
+	//system("pause>nul");
+}
+
+int main()
+{
+	int size;
+	cin >> size;
+	init(size);
+	int times=1;
+	while (check(size) != true)
+	{
+
+		//cout << "----------ROUND." << times<<"----------"<<endl;
+		for (int no = 1; no <= size; no++)
+		{
+			if ((man_goal[no] != size + 1)&&(man_find[no]==0))couple_change(mfav[no][man_goal[no]], no, size);
+			//system("pause>nul");
+		}
+		times++;
+	}
+	cout << endl;
+	show(size);
+	return 0;
+}
