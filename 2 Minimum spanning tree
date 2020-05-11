@@ -32,3 +32,190 @@ ps.
 */
 
 
+#include <iostream>
+using namespace std;
+bool* absorbed_vertex, * absorbed_edge;
+//vertex and edge being absorbed
+int vertex, edge;
+
+class node
+{
+public:
+	int nval, start, end, order;
+	node* last, * next;
+	node(int _nval, int _start, int _end)
+	{
+		order = 0;
+		//order of edge(unsettled)
+		nval = _nval;
+		last = next = NULL;
+		if (_start < _end)
+		{
+			start = _start;
+			end = _end;
+		}
+		else
+		{
+			start = _end;
+			end = _start;
+		}
+	}
+};
+class list
+{//a list to contain every edge
+public:
+	node* head, * tail;
+	list()
+	{
+		head = tail = NULL;
+	}
+	void insert(int insert_value, int _start, int _end)
+	{
+		if (head == NULL)
+		{
+			head = tail = new node(insert_value, _start, _end);
+		}
+		else
+		{
+			node* temp = new node(insert_value, _start, _end);
+			if (insert_value < head->nval)
+			{
+				temp->next = head;
+				head = temp;
+				return;
+			}
+			if (insert_value > tail->nval)
+			{
+				tail->next = temp;
+				tail = temp;
+				return;
+			}
+			node* curr = head;
+			while (curr != NULL)
+			{
+				if (curr->nval <= insert_value && curr->next->nval >= insert_value)
+				{
+					temp->next = curr->next;
+					curr->next = temp;
+					return;
+				}
+				curr = curr->next;
+			}
+		}
+	}
+	void set_order()
+	{//give every edge a order
+		int n = 1;
+		node* curr = head;
+		while (curr != tail)
+		{
+			curr->order = n;
+			curr = curr->next;
+			n++;
+		}
+	}
+	node* find(int _order)
+	{//find the edge with certain order
+		node* curr = head;
+		while (curr != tail)
+		{
+			if (curr->order == _order)return curr;
+			curr = curr->next;
+		}
+		return NULL;
+	}
+	int search_edge()
+	{//search the most less value edge's order
+	//which is linked with absorbed edges but won't become circled
+		int x = 1;
+		bool flag1, flag2;
+		while (x<=edge)
+		{
+			if (absorbed_edge[x] == false)
+			{
+				node* find_one= find(x);
+				//cout << "check edge " << x <<"/"<<find(x)->start<<" -> "<<find(x)->end<<" : "<<find(x)->nval<< endl;;
+				flag1 = absorbed_vertex[find_one->start];
+				flag2 = absorbed_vertex[find_one->end];
+				if ((flag1 ==true&& flag2 == false)|| (flag2 == true && flag1 == false))return x;
+				//means not circled and linked
+				else x++;
+			}
+			else x++;
+		}
+	}
+	void print()
+	{
+		node* curr = head;
+		//cout << "edgelist:\n";
+		while (curr != tail)
+		{
+			//cout << curr->start << "->" << curr->end;
+			//cout << ":" << curr->nval << endl;
+			curr = curr->next;
+		}
+		//cout << curr->start << "->" << curr->end;
+		//cout << ":" << curr->nval << endl;
+	}
+};
+
+void init(int vertex, int edge, list* _list)
+{//found the edgelist with extrern input and 'vertex' and 'edge'
+	int times = 1;
+	int start, end, value;
+	while (times !=edge)
+	{
+		cin >> start >> end >> value;
+		_list->insert(value, start, end);
+		times++;
+	}
+	_list->set_order();
+	absorbed_vertex = new bool[vertex + 1];
+	absorbed_edge = new bool[edge + 1];
+	for (int s = 1; s <= vertex; s++)absorbed_vertex[s] = false;
+	for (int s = 1; s <= edge; s++)absorbed_edge[s] = false;
+}
+
+bool check()
+{//True means All is over
+	for (int s = 1; s <= vertex; s++)if (absorbed_vertex[s] == false)return false;
+	return true;
+}
+
+void prim(int* len, list* _list)
+{//use "prim algorithm" to solve
+//store the length in "len"
+	int first = 1;
+	int searched_one;
+	int new_length;
+	absorbed_vertex[1] = true;
+	//cout << "prim start\n";
+	while (check() == false)
+	{
+		//cout << "\ncheck all fail"<<endl;
+		searched_one = _list->search_edge();
+		absorbed_edge[searched_one] = true;
+		absorbed_vertex[_list-> find(searched_one)->start] = true;
+		absorbed_vertex[_list->find(searched_one)->end] = true;
+		new_length= _list->find(searched_one)->nval;
+		//cout << "length add " << new_length << endl;
+		*len = *len + new_length;
+	}
+}
+
+int main()
+{
+	int* p = new int;
+	//length's value stored there
+	*p = 0;
+	cin >> vertex >> edge;
+	list* edgelist = new list;
+	init(vertex, edge, edgelist);
+	//edgelist->print();
+	prim(p, edgelist);
+	cout << endl << *p << endl;
+	//system("pause>nul");
+	return 0;
+}
+
+
