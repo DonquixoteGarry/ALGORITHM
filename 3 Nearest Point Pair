@@ -30,3 +30,201 @@
 0.64
 
 */
+
+
+
+#include<iostream>
+#include<cmath>
+#include<algorithm>
+using namespace std;
+
+class point
+{
+public:
+	double x, y;
+	int index;
+	point(double _x, double _y, int _index = -1)
+	{
+		x = _x; y = _y; index = _index;
+	}
+};
+
+bool x_compare(point* a, point* b)
+{//yes means a-x is bigger than b
+	return a->x > b->x;
+}
+
+bool y_compare(point* a, point* b)
+{//yes means a-y is bigger than b
+	return a->y > b->y;
+}
+
+double dis(point* a, point* b)
+{//return distance's square
+	double dis = (a->x - b->x) * (a->x - b->x) + (a->y - b->y) * (a->y - b->y);
+	return dis;
+}
+
+
+
+void find(point** list_by_x, point** list_by_y,  unsigned int begin, unsigned int end, double &result_dis, point* &pair_a, point* &pair_b)
+{
+	point* left_pair_a, * left_pair_b, * right_pair_a, * right_pair_b;
+	double left_result_dis, right_result_dis;
+	if (end - begin == 1)
+	{
+		pair_a = list_by_x[begin];
+		pair_b = list_by_x[end];
+		result_dis = dis(pair_a, pair_b);
+	}
+	else
+	{
+		if (end - begin == 2)
+		{
+			double d1, d2, d3;
+			d1 = dis(list_by_x[begin], list_by_x[begin + 1]);
+			d2 = dis(list_by_x[begin], list_by_x[begin + 2]);
+			d3 = dis(list_by_x[begin + 1], list_by_x[begin + 2]);
+			if (d1 > d2&& d1 > d3)
+			{
+				pair_a = list_by_x[begin];
+				pair_b = list_by_x[begin + 1];
+				result_dis = d1;
+			}
+			if (d2 > d1&& d2 > d3)
+			{
+				pair_a = list_by_x[begin];
+				pair_b = list_by_x[begin + 2];
+				result_dis = d2;
+			}
+			if (d3 > d2&& d3 > d1)
+			{
+				pair_a = list_by_x[begin + 1];
+				pair_b = list_by_x[begin + 2];
+				result_dis = d3;
+			}
+		}
+		else
+		{//main part->parting algorithm
+			point** left_part_list_by_y = new point * [end -begin];
+			point** right_part_list_by_y = new point* [end-begin];
+			int middle = (end + begin) / 2;
+			for (unsigned int i = 0, j = 0, k = 0; i < end - begin; i++)
+			{
+				if (list_by_y[i]->index <= middle)
+				{
+					left_part_list_by_y[j] = new point(list_by_y[i]->x, list_by_y[i]->y);
+					j++;
+				}
+				else
+				{
+					right_part_list_by_y[k] = new point(list_by_y[i]->x, list_by_y[i]->y);
+					k++;
+				}
+			}
+			find(list_by_x, left_part_list_by_y, begin, middle, left_result_dis, left_pair_a, left_pair_b);
+
+			find(list_by_x, right_part_list_by_y, middle + 1, end, right_result_dis, right_pair_a, right_pair_b);
+
+			if (left_result_dis > right_result_dis)
+			{
+				pair_a = right_pair_a;
+				pair_b = right_pair_b;
+				result_dis = right_result_dis;
+			}
+			else
+			{
+				pair_a = left_pair_a;
+				pair_b = left_pair_b;
+				result_dis = left_result_dis;
+			}
+
+			point** mix_list = new point * [end -begin];
+			int mix_list_size = 0;
+			for (unsigned int i = 0; i < end - begin; i++)
+			{
+				double temp1 = list_by_x[middle]->x - list_by_y[i]->x;
+				if (temp1*temp1 < result_dis)
+				{
+					mix_list[mix_list_size] = new point(list_by_y[i]->x, list_by_y[i]->y);
+					mix_list_size++;
+				}
+			}
+			for (int i = 0; i < mix_list_size; i++)
+			{
+				for (int j = i + 1; (j < mix_list_size) &&
+					((mix_list[j]->y - mix_list[i]->y)* (mix_list[j]->y - mix_list[i]->y) < result_dis); j++)
+				{
+					double temp;
+					temp = dis(mix_list[j], mix_list[i]);
+					if (temp < result_dis)
+					{
+						pair_a = mix_list[i];
+						pair_b = mix_list[j];
+						result_dis = temp;
+					}
+				}
+			}
+			delete[] left_part_list_by_y;
+			delete[] right_part_list_by_y;
+			delete[] mix_list;
+		}
+	}
+}
+
+void solve(int num, point * *list_by_x, point * &pair_a, point * &pair_b, double &fin_dis)
+{
+	if (num <= 1)return;
+	else
+	{
+		sort(list_by_x, list_by_x + num, x_compare);
+		point** list_by_y = new point * [num];
+		for (int a = 0; a < num; a++) list_by_y[a] = new point(list_by_x[a]->x, list_by_x[a]->y, a);
+		sort(list_by_y, list_by_y + num, y_compare);
+		find(list_by_x, list_by_y, 0, num - 1, fin_dis, pair_a, pair_b);
+		delete[] list_by_y;
+	}
+}
+
+
+int main()
+{
+	int point_num;
+	double point_x, point_y;
+	point* pair_a, * pair_b;
+	double dis;
+	cin >> point_num;
+	point** list1 = new point * [point_num];
+	for (int i = 0; i < point_num; i++)
+	{
+		cin >> point_x >> point_y;
+		list1[i] = new point(point_x, point_y);
+	}
+	solve(point_num, list1, pair_a, pair_b, dis);		
+	//cout << pair_a->x << "," << pair_a->y << " -> " << pair_b->x << "," << pair_b->y << endl;
+	//cout.precision(2);
+	cout << dis;
+	delete[] list1;
+	return 0;
+}/*
+10
+4 1
+7 5.8
+9 6.4
+7 2.4
+6 4.5
+8 4.1
+1 7.6
+9 4.4
+2 7.4
+6.1 7*/
+
+
+
+
+
+
+
+
+
+
